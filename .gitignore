@@ -11,3 +11,4 @@ positive_pqr_files
 protein_clustering_results
 feature_cache
 components.cif
+patch_coordinates_cache
