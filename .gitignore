@@ -14,3 +14,4 @@ components.cif
 patch_coordinates_cache
 unet_training_output
 training_results
+__pycache__

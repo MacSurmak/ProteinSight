@@ -312,7 +312,7 @@ def plot_loss_curves(train_losses, val_losses, save_path, csv_save_path):
     ax.set_xlabel("Epoch", fontsize=10)
     ax.set_ylabel("Loss (Dice + MSE)", fontsize=10)
     
-    ax.set_xlim(left=0, right=len(train_losses))
+    ax.set_xlim(left=1, right=len(train_losses))
 
     ax.xaxis.set_major_locator(mticker.MaxNLocator(integer=True))
     
@@ -387,15 +387,14 @@ def main():
                 data=data, 
                 ax=ax, 
                 order=['train', 'validation', 'test'],
-                color=colors[i],
+                palette=f"dark:{colors[i]}",
                 hue='split',
                 legend=False
             )
             ax.set_title(f"{group.capitalize()} Group", fontsize=10)
-            ax.set_xlabel("Split", fontsize=9)
-            ax.set_ylabel("Number of Unique Clusters" if i == 0 else "", fontsize=9)
-            ax.tick_params(axis='x', rotation=45, labelsize=8)
-            ax.tick_params(axis='y', labelsize=8)
+            ax.set_ylabel("Number of Unique Clusters" if i == 0 else "", fontsize=12)
+            ax.tick_params(axis='x', rotation=45, labelsize=9)
+            ax.tick_params(axis='y', labelsize=9)
 
             # Add count labels on top of bars
             for p in ax.patches:
@@ -406,7 +405,6 @@ def main():
                             textcoords='offset points',
                             fontsize=8)
 
-        fig.suptitle("Cluster Distribution Across Splits", fontsize=12, fontweight='bold')
         plt.tight_layout(rect=[0, 0, 1, 0.96])
         
         viz_path = output_dir / "split_distribution_report.pdf"
