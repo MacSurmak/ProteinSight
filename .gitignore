@@ -12,3 +12,5 @@ protein_clustering_results
 feature_cache
 components.cif
 patch_coordinates_cache
+unet_training_output
+training_results

@@ -95,7 +95,7 @@ def process_structure(task: tuple[Path, Path, Path]) -> tuple[str, bool, str]:
     """
     cif_path, pdb_dir, pqr_dir = task
     pdb_id = cif_path.stem
-    
+
     final_pdb_path = pdb_dir / f"{pdb_id}.pdb"
     final_pqr_path = pqr_dir / f"{pdb_id}.pqr"
 
@@ -117,12 +117,16 @@ def process_structure(task: tuple[Path, Path, Path]) -> tuple[str, bool, str]:
         subprocess.run(
             command, check=True, capture_output=True, text=True, encoding="utf-8"
         )
-        
+
         # On success, return a success status with no error message.
         return pdb_id, True, ""
-        
+
     except FileNotFoundError:
-        return pdb_id, False, "'pdb2pqr' command not found. Ensure it is installed and in the system's PATH."
+        return (
+            pdb_id,
+            False,
+            "'pdb2pqr' command not found. Ensure it is installed and in the system's PATH.",
+        )
     except subprocess.CalledProcessError as e:
         # If pdb2pqr fails, return its stderr for diagnostics.
         return pdb_id, False, e.stderr.strip()
@@ -141,23 +145,27 @@ def main():
         cif_dir = paths["cif_dir"]
         pdb_dir = paths["pdb_dir"]
         pqr_dir = paths["pqr_dir"]
-        
+
         pdb_dir.mkdir(exist_ok=True)
         pqr_dir.mkdir(exist_ok=True)
-        
+
         if not cif_dir.exists():
-            console.print(f"[yellow]Warning: Directory {cif_dir} not found. Skipping dataset '[bold]{name}[/bold]'.[/yellow]")
+            console.print(
+                f"[yellow]Warning: Directory {cif_dir} not found. Skipping dataset '[bold]{name}[/bold]'.[/yellow]"
+            )
             continue
-            
+
         cif_files = list(cif_dir.glob("*.cif"))
-        console.print(f"Found {len(cif_files)} .cif files for the '[bold cyan]{name}[/bold cyan]' dataset.")
+        console.print(
+            f"Found {len(cif_files)} .cif files for the '[bold cyan]{name}[/bold cyan]' dataset."
+        )
         for cif_file in cif_files:
             tasks_to_process.append((cif_file, pdb_dir, pqr_dir))
 
     if not tasks_to_process:
         console.print("[bold red]No .cif files found to process.[/bold red]")
         return
-        
+
     console.print(f"\nTotal tasks to process: {len(tasks_to_process)}")
     console.print(f"Running with {MAX_WORKERS} parallel processes...")
 
@@ -167,10 +175,15 @@ def main():
     # Process all tasks in parallel with a progress bar.
     with Progress(console=console) as progress:
         task_id = progress.add_task("Preparing files...", total=len(tasks_to_process))
-        with concurrent.futures.ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        with concurrent.futures.ProcessPoolExecutor(
+            max_workers=MAX_WORKERS
+        ) as executor:
             # Submit all jobs and create a map of futures to tasks.
-            future_to_task = {executor.submit(process_structure, task): task for task in tasks_to_process}
-            
+            future_to_task = {
+                executor.submit(process_structure, task): task
+                for task in tasks_to_process
+            }
+
             for future in concurrent.futures.as_completed(future_to_task):
                 pdb_id, success, msg = future.result()
                 if success:
@@ -182,14 +195,18 @@ def main():
     # --- Final Report ---
     console.rule("[bold green]Preparation Complete[/bold green]")
     console.print(f"Successfully processed: [green]{successful_count}[/green] files.")
-    
+
     if failed_tasks:
         failed_count = len(failed_tasks)
         console.print(f"Failed to process: [red]{failed_count}[/red] files.")
         console.print("\n[bold red]Error Summary:[/bold red]")
         for pdb_id, error_msg in sorted(failed_tasks):
             # Print the last, most informative line of the error message.
-            last_error_line = error_msg.splitlines()[-1] if error_msg.splitlines() else "Unknown error"
+            last_error_line = (
+                error_msg.splitlines()[-1]
+                if error_msg.splitlines()
+                else "Unknown error"
+            )
             console.print(f" - [bold cyan]{pdb_id}[/bold cyan]: {last_error_line}")
     else:
         console.print("All files were processed without errors.")
@@ -197,9 +214,9 @@ def main():
     console.print("\nPrepared files are located in the following directories:")
     for name, paths in DATASET_PATHS.items():
         if paths["cif_dir"].exists():
-             console.print(f"\n[bold]{name.replace('_', ' ').title()}:[/bold]")
-             console.print(f" - PDB files: [cyan]{paths['pdb_dir']}[/cyan]")
-             console.print(f" - PQR files: [cyan]{paths['pqr_dir']}[/cyan]")
+            console.print(f"\n[bold]{name.replace('_', ' ').title()}:[/bold]")
+            console.print(f" - PDB files: [cyan]{paths['pdb_dir']}[/cyan]")
+            console.print(f" - PQR files: [cyan]{paths['pqr_dir']}[/cyan]")
 
 
 if __name__ == "__main__":
