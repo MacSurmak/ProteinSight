@@ -65,7 +65,7 @@ console = Console()
 # --- INPUT: Specify paths to data and trained model ---
 # This script is configured to run inference on the albumin dataset by default.
 # To run on other datasets, change this path.
-PQR_FILES_DIR = Path("albumins_pqr_files")
+PQR_FILES_DIR = Path("positive_pqr_files")
 MODEL_SAVE_PATH = Path("unet_training_output/unet_best_model.pth")
 OUTPUT_DIR = Path("inference_results")
 
@@ -478,7 +478,7 @@ def run_sliding_window_inference(
         ]
         batch_tensor = torch.stack(patches).to(memory_format=torch.channels_last_3d)
 
-        with torch.no_grad(), torch.cuda.amp.autocast(enabled=(DEVICE == "cuda")):
+        with torch.no_grad(), torch.amp.autocast("cuda", enabled=(DEVICE == "cuda")):
             outputs = torch.sigmoid(model(batch_tensor))
 
         for j, (z, y, x) in enumerate(batch_info):
@@ -490,7 +490,7 @@ def run_sliding_window_inference(
             ] += gaussian_weights
 
     final_prediction = prediction_map / torch.clamp(weight_map, min=1e-8)
-    return final_prediction.squeeze(0)[:D, :H, :W].cpu().numpy()
+    return final_prediction.squeeze(0).cpu().numpy(), (pad_D, pad_H, pad_W)
 
 
 def save_prediction_as_cube(
@@ -532,14 +532,13 @@ def visualize_inference_results(
         f"Inference Result for {pdb_id} (XY Slice)", color="white", fontsize=16
     )
 
-    rgb_input = np.stack(
-        [
-            features[CHANNEL_MAP["sasa"]][cz, :, :],
-            (features[CHANNEL_MAP["hydrophobicity"]][cz, :, :] + 1) / 2,
-            (features[CHANNEL_MAP["electrostatic"]][cz, :, :] + 1) / 2,
-        ],
-        axis=-1,
-    )
+    features_f32 = features.astype(np.float32)
+
+    rgb_input = np.stack([
+        features_f32[CHANNEL_MAP["sasa"]][cz, :, :],
+        (features_f32[CHANNEL_MAP["hydrophobicity"]][cz, :, :] + 1) / 2,
+        (features_f32[CHANNEL_MAP["electrostatic"]][cz, :, :] + 1) / 2,
+    ], axis=-1)
 
     axes[0].imshow(np.clip(rgb_input, 0, 1), origin="lower")
     axes[0].set_title("Input Features (R:SASA, G:Hyd, B:Elec)", color="white")

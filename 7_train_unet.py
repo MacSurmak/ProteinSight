@@ -278,10 +278,12 @@ def visualize_prediction(
     cbar.set_ticks([0, 0.5, 1.0])
 
     for ax in axes:
-        ax.tick_params(axis="both", which="both", length=0, labelbottom=False, labelleft=False)
+        ax.tick_params(
+            axis="both", which="both", length=0, labelbottom=False, labelleft=False
+        )
 
     save_dir.mkdir(exist_ok=True, parents=True)
-    plt.savefig(save_dir / f"epoch_{epoch + 1:04d}.pdf", bbox_inches='tight')
+    plt.savefig(save_dir / f"epoch_{epoch + 1:04d}.pdf", bbox_inches="tight")
     plt.close(fig)
 
 
@@ -296,34 +298,39 @@ def plot_loss_curves(train_losses, val_losses, save_path, csv_save_path):
 
     epochs = range(1, len(train_losses) + 1)
 
-    df = pd.DataFrame({
-        'epoch': epochs,
-        'train_loss': train_losses,
-        'val_loss': val_losses
-    })
-    df.to_csv(csv_save_path, index=False, float_format='%.6f')
+    df = pd.DataFrame(
+        {"epoch": epochs, "train_loss": train_losses, "val_loss": val_losses}
+    )
+    df.to_csv(csv_save_path, index=False, float_format="%.6f")
 
     sns.set_theme(style="ticks", context="paper")
     fig, ax = plt.subplots(figsize=(4, 3))
 
     ax.plot(epochs, train_losses, label="Training Loss", color="black", linewidth=1.5)
-    ax.plot(epochs, val_losses, label="Validation Loss", color="red", linestyle="--", linewidth=1.5)
+    ax.plot(
+        epochs,
+        val_losses,
+        label="Validation Loss",
+        color="red",
+        linestyle="--",
+        linewidth=1.5,
+    )
 
     ax.set_xlabel("Epoch", fontsize=10)
     ax.set_ylabel("Loss (Dice + MSE)", fontsize=10)
-    
+
     ax.set_xlim(left=1, right=len(train_losses))
 
     ax.xaxis.set_major_locator(mticker.MaxNLocator(integer=True))
-    
+
     ax.legend(fontsize=8)
     ax.grid(True, linestyle=":", alpha=0.6)
-    ax.tick_params(axis='both', which='major', labelsize=8)
-    
+    ax.tick_params(axis="both", which="major", labelsize=8)
+
     sns.despine(ax=ax)
 
-    output_pdf_path = save_path.with_suffix('.pdf')
-    plt.savefig(output_pdf_path, bbox_inches='tight')
+    output_pdf_path = save_path.with_suffix(".pdf")
+    plt.savefig(output_pdf_path, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -344,73 +351,84 @@ def main():
     console.print(f"Loaded split report with {len(split_report_df)} total entries.")
 
     existing_npz_files = {p.stem for p in NPZ_CACHE_DIR.glob("*.npz")}
-    
+
     console.print(f"Found {len(existing_npz_files)} existing .npz cache files.")
 
-    filtered_df = split_report_df[split_report_df['pdb_id'].isin(existing_npz_files)].copy()
-    
-    console.print(f"Using {len(filtered_df)} entries that have a corresponding cache file.")
+    filtered_df = split_report_df[
+        split_report_df["pdb_id"].isin(existing_npz_files)
+    ].copy()
 
-    train_df = filtered_df[filtered_df['split'] == 'train']
-    val_df = filtered_df[filtered_df['split'] == 'validation']
+    console.print(
+        f"Using {len(filtered_df)} entries that have a corresponding cache file."
+    )
+
+    train_df = filtered_df[filtered_df["split"] == "train"]
+    val_df = filtered_df[filtered_df["split"] == "validation"]
 
     train_pdb_ids = {
-        "positive": train_df[train_df['group'] == 'positive']['pdb_id'].tolist(),
-        "negative": train_df[train_df['group'] == 'negative']['pdb_id'].tolist(),
+        "positive": train_df[train_df["group"] == "positive"]["pdb_id"].tolist(),
+        "negative": train_df[train_df["group"] == "negative"]["pdb_id"].tolist(),
     }
-    
+
     val_pdb_ids = {
-        "positive": val_df[val_df['group'] == 'positive']['pdb_id'].tolist(),
-        "negative": val_df[val_df['group'] == 'negative']['pdb_id'].tolist(),
+        "positive": val_df[val_df["group"] == "positive"]["pdb_id"].tolist(),
+        "negative": val_df[val_df["group"] == "negative"]["pdb_id"].tolist(),
     }
 
     # --- DEBUG ---
     console.rule("[bold yellow]Debug: Visualizing Split Distribution[/bold yellow]")
-    
+
     def visualize_split_distribution(df: pd.DataFrame, output_dir: Path):
         """Creates a bar plot showing the number of unique clusters per split."""
-        cluster_counts = df.groupby(['split', 'group'])['cluster_id'].nunique().reset_index()
-        
+        cluster_counts = (
+            df.groupby(["split", "group"])["cluster_id"].nunique().reset_index()
+        )
+
         fig, axes = plt.subplots(1, 2, figsize=(8, 4), sharey=True)
         sns.set_theme(style="whitegrid", context="paper")
-        
-        groups = ['positive', 'negative']
-        colors = ['#34A853', '#EA4335']
-        
+
+        groups = ["positive", "negative"]
+        colors = ["#34A853", "#EA4335"]
+
         for i, group in enumerate(groups):
             ax = axes[i]
-            data = cluster_counts[cluster_counts['group'] == group]
-            
+            data = cluster_counts[cluster_counts["group"] == group]
+
             sns.barplot(
-                x='split', 
-                y='cluster_id', 
-                data=data, 
-                ax=ax, 
-                order=['train', 'validation', 'test'],
+                x="split",
+                y="cluster_id",
+                data=data,
+                ax=ax,
+                order=["train", "validation", "test"],
                 palette=f"dark:{colors[i]}",
-                hue='split',
-                legend=False
+                hue="split",
+                legend=False,
             )
             ax.set_title(f"{group.capitalize()} Group", fontsize=10)
             ax.set_ylabel("Number of Unique Clusters" if i == 0 else "", fontsize=12)
-            ax.tick_params(axis='x', rotation=45, labelsize=9)
-            ax.tick_params(axis='y', labelsize=9)
+            ax.tick_params(axis="x", rotation=45, labelsize=9)
+            ax.tick_params(axis="y", labelsize=9)
 
             # Add count labels on top of bars
             for p in ax.patches:
-                ax.annotate(f'{int(p.get_height())}', 
-                            (p.get_x() + p.get_width() / 2., p.get_height()), 
-                            ha='center', va='center', 
-                            xytext=(0, 5), 
-                            textcoords='offset points',
-                            fontsize=8)
+                ax.annotate(
+                    f"{int(p.get_height())}",
+                    (p.get_x() + p.get_width() / 2.0, p.get_height()),
+                    ha="center",
+                    va="center",
+                    xytext=(0, 5),
+                    textcoords="offset points",
+                    fontsize=8,
+                )
 
         plt.tight_layout(rect=[0, 0, 1, 0.96])
-        
+
         viz_path = output_dir / "split_distribution_report.pdf"
         plt.savefig(viz_path)
         plt.close(fig)
-        console.print(f"Split distribution visualization saved to [cyan]{viz_path}[/cyan]")
+        console.print(
+            f"Split distribution visualization saved to [cyan]{viz_path}[/cyan]"
+        )
 
     # Generate the visualization using the dataframe we already loaded
     visualize_split_distribution(split_report_df, OUTPUT_DIR)

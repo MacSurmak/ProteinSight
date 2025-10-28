@@ -168,20 +168,28 @@ def create_visualization(
     ]
 
     for i, (data, title) in enumerate(slice_data):
-        axes[i].imshow(data, cmap=cmap, norm=norm, origin="lower", interpolation='none')
+        axes[i].imshow(data, cmap=cmap, norm=norm, origin="lower", interpolation="none")
         axes[i].set_title(title, fontsize=8)
-        axes[i].tick_params(axis="both", which="both", length=0, labelbottom=False, labelleft=False)
+        axes[i].tick_params(
+            axis="both", which="both", length=0, labelbottom=False, labelleft=False
+        )
         axes[i].spines[:].set_visible(False)
 
     legend_elements = [
-        plt.Rectangle((0, 0), 1, 1, color=cmap.colors[1], label='Surface (SASA)'),
-        plt.Rectangle((0, 0), 1, 1, color=cmap.colors[2], label='Cold Surface'),
-        plt.Rectangle((0, 0), 1, 1, color=cmap.colors[3], label='Binding Site'),
+        plt.Rectangle((0, 0), 1, 1, color=cmap.colors[1], label="Surface (SASA)"),
+        plt.Rectangle((0, 0), 1, 1, color=cmap.colors[2], label="Cold Surface"),
+        plt.Rectangle((0, 0), 1, 1, color=cmap.colors[3], label="Binding Site"),
     ]
-    fig.legend(handles=legend_elements, loc='lower center', ncol=3, fontsize=8, bbox_to_anchor=(0.5, -0.05))
+    fig.legend(
+        handles=legend_elements,
+        loc="lower center",
+        ncol=3,
+        fontsize=8,
+        bbox_to_anchor=(0.5, -0.05),
+    )
 
     plt.tight_layout(rect=[0, 0.05, 1, 0.95])
-    plt.savefig(output_dir / f"{pdb_id}_coords.pdf", bbox_inches='tight')
+    plt.savefig(output_dir / f"{pdb_id}_coords.pdf", bbox_inches="tight")
     plt.close(fig)
 
 
