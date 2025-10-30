@@ -9,12 +9,12 @@ Carotenoproteins play essential roles across all domains of life, yet identifyin
 The core of ProteinSight is a 3D U-Net, an architecture that has demonstrated robust performance in the analysis of volumetric data. The model is trained to transform an 8-channel input tensor describing a protein's local environment into a single-channel probability map corresponding to the ligand's position. The architecture is characterized by its symmetric, U-shaped structure, which comprises a contracting path (encoder) to extract contextual features at multiple scales and an expansive path (decoder) to enable precise localization of these features.
 
 *Figure 1: The 3D U-Net architecture used for binding site segmentation. The model employs a symmetric encoder-decoder structure with skip connections to preserve high-resolution spatial information.*
-![3D U-Net Architecture](Figures/U-net.drawio.pdf)
+![3D U-Net Architecture](Figures/U-net-architecture.png)
 
 The input to the model is a volumetric map with eight distinct feature channels. The selection of these features was guided by statistical analysis of known carotenoid-binding sites. These channels encode a combination of geometric and physicochemical properties, including molecular shape (Occupancy), local surface curvature (Shape Index), hydrophobicity, electrostatic potential, aromaticity, hydrogen bond donor and acceptor potentials, and a proxy for the solvent-accessible surface area (SASA). This multi-modal representation allows the model to learn the complex interplay of features that define a functional binding site.
 
 *Figure 2: A 2D cross-section of the 8 input feature channels and the target mask for a representative carotenoid-binding protein (PDB ID: 5FCY).*
-![Feature Channels](Figures/5FCY_fields_slice.pdf)
+![Feature Channels](Figures/feature_channels.png)
 
 ### Key Results
 
