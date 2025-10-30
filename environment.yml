@@ -1,0 +1,17 @@
+name: unet
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - h5py
+  - matplotlib
+  - pandas
+  - rich
+  - numba
+  - tqdm
+  - gemmi
+  - scipy
+  - scikit-learn
+  - seaborn
+prefix: /home/macsurmak/miniconda3/envs/unet
