@@ -28,7 +28,7 @@ The trained ProteinSight model functions as a highly sensitive and specific dete
 Furthermore, the model's utility for hypothesis generation was demonstrated on a challenging case: Human Serum Albumin (HSA, PDB ID: 1A06), a protein known for its promiscuous, non-specific binding of hydrophobic molecules. In the absence of a canonical binding pocket, ProteinSight identified two distinct, high-confidence hydrophobic patches on the protein surface, providing the first structural hypothesis for the experimentally observed association of carotenoids with albumin.
 
 *Figure 4: Prediction of potential carotenoid interaction sites on Human Serum Albumin (PDB ID: 1A06). The model identifies two plausible surface patches, demonstrating its potential as a hypothesis-generation engine.*
-![Prediction on 1A06](Figures/1A06.png)
+![Prediction on 1A06](Figures/1AO6.png)
 
 ### Installation
 
@@ -40,12 +40,12 @@ The data preparation pipeline relies on two external command-line tools: `pdb2pq
 **2. Clone the Repository**
 Clone this repository to your local machine.
 ```bash
-git clone https://github.com/your-username/ProteinSight.git
+git clone https://github.com/MacSurmak/ProteinSight.git
 cd ProteinSight
 ```
 
 **3. Create and Activate the Conda Environment**
-The provided `environment.yml` file contains all necessary Python dependencies, including specific versions of PyTorch compiled for CUDA 12.1, ensuring full reproducibility. Use the following commands to create and activate the environment.
+The provided `environment.yml` file contains all necessary Python dependencies, including specific versions of PyTorch compiled for CUDA 12.8, ensuring full reproducibility. Use the following commands to create and activate the environment.
 ```bash
 conda env create -f environment.yml
 conda activate proteinsight
