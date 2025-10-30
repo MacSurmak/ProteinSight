@@ -59,7 +59,7 @@ METRICS_CSV_PATH = OUTPUT_DIR / "test_set_metrics_per_protein.csv"
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 NUM_INPUT_CHANNELS = 8
-METRIC_THRESHOLD = 0.5
+METRIC_THRESHOLD = 0.01
 
 
 def calculate_metrics(
@@ -126,7 +126,7 @@ def main():
 
     model = Deeper3DUnetWithDropout(in_channels=NUM_INPUT_CHANNELS, out_channels=1)
     if DEVICE == "cuda":
-        torch.set_float32_matmul_precision("high")
+        # torch.set_float32_matmul_precision("high")
         model.to(DEVICE, memory_format=torch.channels_last_3d)
         model.load_state_dict(torch.load(MODEL_SAVE_PATH, map_location=DEVICE))
         model = torch.compile(model)
@@ -188,7 +188,9 @@ def main():
 
     console.print("[4/4] Aggregating and saving results...")
     if not all_metrics:
-        console.print("[bold red]Error: No metrics calculated. Check HDF5 files.[/bold red]")
+        console.print(
+            "[bold red]Error: No metrics calculated. Check HDF5 files.[/bold red]"
+        )
         return
 
     metrics_df = pd.DataFrame(all_metrics)
@@ -208,7 +210,12 @@ def main():
     table.add_column("Negative Proteins (Mean ± Std)", justify="right", style="green")
 
     metric_keys_pos = [
-        "roc_auc", "auprc", "dice_f1", "iou_jaccard", "precision", "recall"
+        "roc_auc",
+        "auprc",
+        "dice_f1",
+        "iou_jaccard",
+        "precision",
+        "recall",
     ]
     for key in metric_keys_pos:
         mean = pos_metrics[key].mean()

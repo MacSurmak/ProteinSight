@@ -36,7 +36,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from rich.console import Console
-from tqdm import tqdm
+from rich.progress import Progress
 
 from model import Deeper3DUnetWithDropout
 
@@ -439,7 +439,7 @@ class FieldCalculator:
 
 def run_sliding_window_inference(
     model: nn.Module, input_tensor: torch.Tensor
-) -> np.ndarray:
+) -> Tuple[np.ndarray, Tuple[int, int, int]]:
     model.eval()
     C, D, H, W = input_tensor.shape
     pad_D = (STRIDE - (D - PATCH_SIZE) % STRIDE) % STRIDE
@@ -468,26 +468,35 @@ def run_sliding_window_inference(
         for x in range(0, pW - PATCH_SIZE + 1, STRIDE)
     ]
 
-    for i in tqdm(
-        range(0, len(patch_coords), INFERENCE_BATCH_SIZE), desc="  Inferring patches"
-    ):
-        batch_info = patch_coords[i : i + INFERENCE_BATCH_SIZE]
-        patches = [
-            padded_input[:, z : z + PATCH_SIZE, y : y + PATCH_SIZE, x : x + PATCH_SIZE]
-            for z, y, x in batch_info
-        ]
-        batch_tensor = torch.stack(patches).to(memory_format=torch.channels_last_3d)
+    num_batches = math.ceil(len(patch_coords) / INFERENCE_BATCH_SIZE)
 
-        with torch.no_grad(), torch.amp.autocast("cuda", enabled=(DEVICE == "cuda")):
-            outputs = torch.sigmoid(model(batch_tensor))
+    with Progress(transient=True) as progress:
+        task = progress.add_task("  [cyan]Inferring patches...", total=num_batches)
 
-        for j, (z, y, x) in enumerate(batch_info):
-            prediction_map[
-                :, z : z + PATCH_SIZE, y : y + PATCH_SIZE, x : x + PATCH_SIZE
-            ] += (outputs[j] * gaussian_weights)
-            weight_map[
-                :, z : z + PATCH_SIZE, y : y + PATCH_SIZE, x : x + PATCH_SIZE
-            ] += gaussian_weights
+        for i in range(0, len(patch_coords), INFERENCE_BATCH_SIZE):
+            batch_info = patch_coords[i : i + INFERENCE_BATCH_SIZE]
+            patches = [
+                padded_input[
+                    :, z : z + PATCH_SIZE, y : y + PATCH_SIZE, x : x + PATCH_SIZE
+                ]
+                for z, y, x in batch_info
+            ]
+            batch_tensor = torch.stack(patches).to(memory_format=torch.channels_last_3d)
+
+            with torch.no_grad(), torch.amp.autocast(
+                "cuda", enabled=(DEVICE == "cuda")
+            ):
+                outputs = torch.sigmoid(model(batch_tensor))
+
+            for j, (z, y, x) in enumerate(batch_info):
+                prediction_map[
+                    :, z : z + PATCH_SIZE, y : y + PATCH_SIZE, x : x + PATCH_SIZE
+                ] += (outputs[j] * gaussian_weights)
+                weight_map[
+                    :, z : z + PATCH_SIZE, y : y + PATCH_SIZE, x : x + PATCH_SIZE
+                ] += gaussian_weights
+
+            progress.update(task, advance=1)
 
     final_prediction = prediction_map / torch.clamp(weight_map, min=1e-8)
     return final_prediction.squeeze(0).cpu().numpy(), (pad_D, pad_H, pad_W)
@@ -534,11 +543,14 @@ def visualize_inference_results(
 
     features_f32 = features.astype(np.float32)
 
-    rgb_input = np.stack([
-        features_f32[CHANNEL_MAP["sasa"]][cz, :, :],
-        (features_f32[CHANNEL_MAP["hydrophobicity"]][cz, :, :] + 1) / 2,
-        (features_f32[CHANNEL_MAP["electrostatic"]][cz, :, :] + 1) / 2,
-    ], axis=-1)
+    rgb_input = np.stack(
+        [
+            features_f32[CHANNEL_MAP["sasa"]][cz, :, :],
+            (features_f32[CHANNEL_MAP["hydrophobicity"]][cz, :, :] + 1) / 2,
+            (features_f32[CHANNEL_MAP["electrostatic"]][cz, :, :] + 1) / 2,
+        ],
+        axis=-1,
+    )
 
     axes[0].imshow(np.clip(rgb_input, 0, 1), origin="lower")
     axes[0].set_title("Input Features (R:SASA, G:Hyd, B:Elec)", color="white")
@@ -596,7 +608,7 @@ def main():
     console.print("\n[2/4] Loading and compiling U-Net model...")
     model = Deeper3DUnetWithDropout(in_channels=NUM_INPUT_CHANNELS, out_channels=1)
     if DEVICE == "cuda":
-        torch.set_float32_matmul_precision("high")
+        # torch.set_float32_matmul_precision("high")
         model.to(DEVICE, memory_format=torch.channels_last_3d)
         model.load_state_dict(torch.load(MODEL_SAVE_PATH, map_location=DEVICE))
         model = torch.compile(model)
@@ -608,7 +620,9 @@ def main():
     console.print("\n[3/4] Running sliding window inference...")
     start_time = time.time()
     input_tensor = torch.from_numpy(features_np).to(torch.float32).to(DEVICE)
-    prediction_np = run_sliding_window_inference(model, input_tensor)
+    prediction_padded_np, _ = run_sliding_window_inference(model, input_tensor)
+    _, D, H, W = features_np.shape
+    prediction_np = prediction_padded_np[:D, :H, :W]
     console.print(f"  > Inference time: {time.time() - start_time:.2f} s")
 
     console.print("\n[4/4] Saving and visualizing results...")

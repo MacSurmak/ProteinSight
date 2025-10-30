@@ -15,3 +15,5 @@ patch_coordinates_cache
 unet_training_output
 training_results
 __pycache__
+inference_results
+evaluation_results_island_volume
