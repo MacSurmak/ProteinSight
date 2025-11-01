@@ -80,7 +80,7 @@ python inference.py <PDB_ID>
 
 We provide the final pre-trained model weights, which were trained for 128 epochs on the curated dataset described in our paper. The model can be used directly for inference without the need for retraining.
 
-1.  **Download the model:** Navigate to the [**Releases**](https://github.com/your-username/ProteinSight/releases) page of this repository.
+1.  **Download the model:** Navigate to the [**Releases**](https://github.com/MacSurmak/ProteinSight/releases) page of this repository.
 2.  **Get the weights file:** From the latest release (e.g., `v1.0.0`), download the asset named `unet_best_model.pth`.
 3.  **Place the file:** Place the downloaded `unet_best_model.pth` file into a directory within the project structure. Define the path to the loaded model in the inference script (`inference.py`). 
 4. **Set up the environment:** Install all dependencies, especially `pdb2pqr`. It is strongly recommended to set up CUDA, otherwise calculations may take a while, though `inference.py` can perform calculations on CPU.
