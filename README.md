@@ -100,7 +100,7 @@ If you use ProteinSight in your research, please cite our work:
   author={Surkov, M. M. and Litovets, A. Yu. and Yaroshevich, I. A.},
   journal={bioRxiv},
   year={2025},
-  doi={}
+  doi={10.1101/2025.10.30.685633}
 }
 ```
 
